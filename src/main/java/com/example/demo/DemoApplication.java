@@ -1,29 +1,27 @@
 package com.example.demo;
 
-import java.net.InetAddress;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariConfigMXBean;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.support.DefaultSingletonBeanRegistry;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import javax.sql.DataSource;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 @SpringBootApplication
 @RestController
@@ -46,6 +44,8 @@ public class DemoApplication {
 
 	@Autowired
 	LocalContainerEntityManagerFactoryBean entityManager;
+
+	private RestTemplate template = new RestTemplate();
 
 	public static void main(String[] args) {
 //		java.security.Security.setProperty("networkaddress.cache.ttl" , "1");
@@ -70,7 +70,7 @@ public class DemoApplication {
 			} catch (Exception ignore) {
 				System.out.println(getCurrentTime() +",save failed:"+ ignore.getMessage());
 			} finally {
-				Thread.sleep(1000);
+				Thread.sleep(2000);
 			}
 		}
 	}
@@ -122,4 +122,23 @@ public class DemoApplication {
 		return dataSource;
 	}
 
+	@GetMapping("/send-req-ec2/{count}")
+	public Object send(@PathVariable("count") int count) throws InterruptedException {
+		 Person person = new Person();
+		 person.setName("ram");
+		 person.setAge(12);
+		HttpHeaders headers = new HttpHeaders();
+		HttpEntity<Person> request =
+				new HttpEntity<Person>(person, headers);
+		for(int i = 0;i<count;++i) {
+			try {
+				JsonNode res = template.postForObject("http://34.243.29.122:8080/person", request, JsonNode.class);
+				System.out.println("response :"+ res.toString());
+			}catch(Exception e) {
+				System.out.println("Exception: " + e.getMessage());
+			}
+			Thread.sleep(10000);
+		}
+		return null;
+	}
 }
