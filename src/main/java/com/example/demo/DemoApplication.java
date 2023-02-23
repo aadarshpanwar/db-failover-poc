@@ -34,7 +34,7 @@ public class DemoApplication {
 
 	private RestTemplate template = new RestTemplate();
 
-	private String IP = "3.249.163.205";
+	private String IP = "34.253.182.243";
 
 	public static void main(String[] args) {
 //		java.security.Security.setProperty("networkaddress.cache.ttl" , "1");
