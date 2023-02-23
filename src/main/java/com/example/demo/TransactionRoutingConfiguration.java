@@ -34,41 +34,41 @@ public class TransactionRoutingConfiguration {
     @Value("${spring.datasource.password}")
     private String password;
 
-    @Bean
-    public DataSource mysqlDataSource() {
-//        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-//        dataSource.setDriverClassName("software.amazon.jdbc.Driver");
-//        dataSource.setUrl(primaryUrl);
-//        dataSource.setUsername(username);
-//        dataSource.setPassword(password);
-        HikariDataSource ds = new HikariDataSource();
-        ds.setExceptionOverrideClassName("software.amazon.jdbc.util.HikariCPSQLException");
-            // Configure the connection pool:
-            ds.setUsername(username);
-            ds.setPassword(password);
-
-            // Specify the underlying datasource for HikariCP:
-            ds.setDataSourceClassName(AwsWrapperDataSource.class.getName());
-
-            // Configure AwsWrapperDataSource:
-            ds.addDataSourceProperty("jdbcProtocol", "jdbc:postgresql:");
-            ds.addDataSourceProperty("databasePropertyName", "databaseName");
-            ds.addDataSourceProperty("portPropertyName", "portNumber");
-            ds.addDataSourceProperty("serverPropertyName", "serverName");
-            //ds.setJdbcUrl("jdbc:aws-wrapper:postgresql://dbfailover-poc.cluster-cdibd9suphjv.eu-west-1.rds.amazonaws.com:5432/test");
-            // Specify the driver-specific data source for AwsWrapperDataSource:
-            ds.addDataSourceProperty("targetDataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
-
-            // Configuring PGSimpleDataSource:
-            Properties targetDataSourceProps = new Properties();
-            targetDataSourceProps.setProperty("serverName", "dbfailover-poc.cluster-cdibd9suphjv.eu-west-1.rds.amazonaws.com");
-            targetDataSourceProps.setProperty("databaseName", "test");
-            targetDataSourceProps.setProperty("portNumber", "5432");
-            targetDataSourceProps.setProperty("wrapperPlugins", "failover");
-
-        ds.addDataSourceProperty("targetDataSourceProperties", targetDataSourceProps);
-        return ds;
-    }
+//    @Bean
+//    public DataSource mysqlDataSource() {
+////        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+////        dataSource.setDriverClassName("software.amazon.jdbc.Driver");
+////        dataSource.setUrl(primaryUrl);
+////        dataSource.setUsername(username);
+////        dataSource.setPassword(password);
+//        HikariDataSource ds = new HikariDataSource();
+//        ds.setExceptionOverrideClassName("software.amazon.jdbc.util.HikariCPSQLException");
+//            // Configure the connection pool:
+//            ds.setUsername(username);
+//            ds.setPassword(password);
+//          //  ds.setAutoCommit(false);
+//            // Specify the underlying datasource for HikariCP:
+//            ds.setDataSourceClassName(AwsWrapperDataSource.class.getName());
+//
+//            // Configure AwsWrapperDataSource:
+//            ds.addDataSourceProperty("jdbcProtocol", "jdbc:postgresql:");
+//            ds.addDataSourceProperty("databasePropertyName", "databaseName");
+//            ds.addDataSourceProperty("portPropertyName", "portNumber");
+//            ds.addDataSourceProperty("serverPropertyName", "serverName");
+//            //ds.setJdbcUrl("jdbc:aws-wrapper:postgresql://dbfailover-poc.cluster-cdibd9suphjv.eu-west-1.rds.amazonaws.com:5432/test");
+//            // Specify the driver-specific data source for AwsWrapperDataSource:
+//            ds.addDataSourceProperty("targetDataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
+//
+//            // Configuring PGSimpleDataSource:
+//            Properties targetDataSourceProps = new Properties();
+//            targetDataSourceProps.setProperty("serverName", "dbfailover-poc.cluster-cdibd9suphjv.eu-west-1.rds.amazonaws.com");
+//            targetDataSourceProps.setProperty("databaseName", "test");
+//            targetDataSourceProps.setProperty("portNumber", "5432");
+//            targetDataSourceProps.setProperty("wrapperPlugins", "failover");
+//
+//        ds.addDataSourceProperty("targetDataSourceProperties", targetDataSourceProps);
+//        return ds;
+//    }
 
 }
 
