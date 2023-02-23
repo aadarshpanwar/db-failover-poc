@@ -40,11 +40,11 @@ public class TransactionRoutingConfiguration {
 
     @Bean
     public DataSource readWriteDataSource() {
-        HikariDataSource ds = new HikariDataSource();
-        ds.setUsername(username);
+        PGSimpleDataSource ds = new PGSimpleDataSource();
+        ds.setUser(username);
         ds.setPassword(password);
-        ds.setJdbcUrl(primaryUrl);
-        ds.setDriverClassName("software.aws.rds.jdbc.postgresql.Driver");
+        ds.setURL(primaryUrl);
+      //  ds.setDriverClassName("software.aws.rds.jdbc.postgresql.Driver");
        // ds.setDataSourceClassName("software.aws.rds.jdbc.postgresql.Driver");
         // Configure AwsWrapperDataSource:
 //        ds.addDataSourceProperty("jdbcProtocol", "jdbc:postgresql:");
@@ -69,20 +69,19 @@ public class TransactionRoutingConfiguration {
 
 
       //  ds.addDataSourceProperty("targetDataSourceProperties", targetDataSourceProps);
-        return ds;
-       // return connectionPoolDataSource(ds);
+       // return ds;
+        return connectionPoolDataSource(ds);
     }
 
     @Bean
     public DataSource readOnlyDataSource() {
-        HikariDataSource ds = new HikariDataSource();
-        ds.setUsername(username);
+        PGSimpleDataSource ds = new PGSimpleDataSource();
+        ds.setUser(username);
         ds.setPassword(password);
-        ds.setJdbcUrl(replicaUrl);
-        ds.setDriverClassName("software.aws.rds.jdbc.postgresql.Driver");
+        ds.setURL(replicaUrl);
        // ds.setDataSourceClassName("software.aws.rds.jdbc.postgresql.Driver");
-        return ds;
-        //return connectionPoolDataSource(ds);
+        //return ds;
+        return connectionPoolDataSource(ds);
     }
 
     @Primary
@@ -104,12 +103,17 @@ public class TransactionRoutingConfiguration {
        // hikariConfig.setMaximumPoolSize(maxPoolSize);
        // hikariConfig.setMinimumIdle(minimumIdle);
         hikariConfig.setDataSource(dataSource);
+        hikariConfig.setPassword(password);
+
         hikariConfig.setAutoCommit(false);
+        hikariConfig.setDriverClassName("software.aws.rds.jdbc.postgresql.Driver");
         return hikariConfig;
     }
 
     protected HikariDataSource connectionPoolDataSource(DataSource dataSource) {
-        return new HikariDataSource(hikariConfig(dataSource));
+    HikariDataSource source= new HikariDataSource(hikariConfig(dataSource));
+        //source.setDriverClassName("software.aws.rds.jdbc.postgresql.Driver");
+        return source;
     }
 }
 
