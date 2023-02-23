@@ -55,6 +55,21 @@ public class DemoApplication {
 		return personRepo.findAll();
 	}
 
+	@GetMapping("/send-local/{count}")
+	public void sendPostLocal(@PathVariable("count") int count) throws InterruptedException {
+		for(int i = 0;i<count;++i) {
+			try {
+				Person person = new Person();
+				person.setName("ram");
+				person.setAge(12);
+				personRepo.save(person);
+				System.out.println("saved :"+ person.getId());
+			}catch(Exception e) {
+				System.out.println("Exception Person list " + e.getMessage());
+			}
+			Thread.sleep(1000);
+		}
+	}
 	@GetMapping("send-find-all/{count}")
 	public void getAll(@PathVariable("count") int count) throws InterruptedException {
 		for(int i = 0;i<count;++i) {

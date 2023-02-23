@@ -67,17 +67,17 @@
 			<version>5.6.0</version>
 			<scope>test</scope>
 	   </dependency>
-<!--		<dependency>-->
-<!--			<groupId>software.aws.rds</groupId>-->
-<!--			<artifactId>aws-postgresql-jdbc</artifactId>-->
-<!--			<version>0.1.0</version>-->
-<!--		</dependency>-->
-
 		<dependency>
-			<groupId>software.amazon.jdbc</groupId>
-			<artifactId>aws-advanced-jdbc-wrapper</artifactId>
-			<version>1.0.1</version>
+			<groupId>software.aws.rds</groupId>
+			<artifactId>aws-postgresql-jdbc</artifactId>
+			<version>0.1.0</version>
 		</dependency>
+
+<!--		<dependency>-->
+<!--			<groupId>software.amazon.jdbc</groupId>-->
+<!--			<artifactId>aws-advanced-jdbc-wrapper</artifactId>-->
+<!--			<version>1.0.1</version>-->
+<!--		</dependency>-->
 
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
