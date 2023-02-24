@@ -6,18 +6,14 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.*;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import software.amazon.jdbc.ds.AwsWrapperDataSource;
-//import software.amazon.jdbc.ds.AwsWrapperDataSource;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 @Configuration
 public class TransactionRoutingConfiguration {
@@ -34,56 +30,65 @@ public class TransactionRoutingConfiguration {
     @Value("${spring.datasource.password}")
     private String password;
 
-//    @Bean
-//    public DataSource mysqlDataSource() {
-////        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-////        dataSource.setDriverClassName("software.amazon.jdbc.Driver");
-////        dataSource.setUrl(primaryUrl);
-////        dataSource.setUsername(username);
-////        dataSource.setPassword(password);
-//        HikariDataSource ds = new HikariDataSource();
-//        ds.setExceptionOverrideClassName("software.amazon.jdbc.util.HikariCPSQLException");
-//            // Configure the connection pool:
-//            ds.setUsername(username);
-//            ds.setPassword(password);
-//          //  ds.setAutoCommit(false);
-//            // Specify the underlying datasource for HikariCP:
-//            ds.setDataSourceClassName(AwsWrapperDataSource.class.getName());
-//
-//            // Configure AwsWrapperDataSource:
-//            ds.addDataSourceProperty("jdbcProtocol", "jdbc:postgresql:");
-//            ds.addDataSourceProperty("databasePropertyName", "databaseName");
-//            ds.addDataSourceProperty("portPropertyName", "portNumber");
-//            ds.addDataSourceProperty("serverPropertyName", "serverName");
-//            //ds.setJdbcUrl("jdbc:aws-wrapper:postgresql://dbfailover-poc.cluster-cdibd9suphjv.eu-west-1.rds.amazonaws.com:5432/test");
-//            // Specify the driver-specific data source for AwsWrapperDataSource:
-//            ds.addDataSourceProperty("targetDataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
-//
-//            // Configuring PGSimpleDataSource:
-//            Properties targetDataSourceProps = new Properties();
-//            targetDataSourceProps.setProperty("serverName", "dbfailover-poc.cluster-cdibd9suphjv.eu-west-1.rds.amazonaws.com");
-//            targetDataSourceProps.setProperty("databaseName", "test");
-//            targetDataSourceProps.setProperty("portNumber", "5432");
-//            targetDataSourceProps.setProperty("wrapperPlugins", "failover");
-//
-//        ds.addDataSourceProperty("targetDataSourceProperties", targetDataSourceProps);
-//        return ds;
-//    }
+    private int maxPoolSize = 5;
 
-}
+    private int minimumIdle = 1;
 
- class TransactionRoutingDataSource extends AbstractRoutingDataSource {
-
-    @Override
-    protected Object determineCurrentLookupKey() {
-        return TransactionSynchronizationManager.isCurrentTransactionReadOnly() ?
-                DataSourceType.READ_ONLY :
-                DataSourceType.READ_WRITE;
+    @Bean
+    public DataSource readWriteDataSource() {
+        PGSimpleDataSource dataSource = new PGSimpleDataSource();
+        dataSource.setURL(primaryUrl);
+        dataSource.setUser(username);
+        dataSource.setPassword(password);
+        return connectionPoolDataSource(dataSource);
     }
 
- }
+    @Bean
+    public DataSource readOnlyDataSource() {
+        PGSimpleDataSource dataSource = new PGSimpleDataSource();
+        dataSource.setURL(replicaUrl);
+        dataSource.setUser(username);
+        dataSource.setPassword(password);
+        return connectionPoolDataSource(dataSource);
+    }
 
- enum DataSourceType {
-    READ_WRITE,
-    READ_ONLY
+    @Primary
+    @DependsOn({"readWriteDataSource", "readOnlyDataSource"})
+    @Bean
+    public TransactionRoutingDataSource actualDataSource() {
+        TransactionRoutingDataSource routingDataSource = new TransactionRoutingDataSource();
+
+        Map<Object, Object> dataSourceMap = new HashMap<>();
+        dataSourceMap.put(DataSourceType.READ_WRITE, readWriteDataSource());
+        dataSourceMap.put(DataSourceType.READ_ONLY, readOnlyDataSource());
+
+        routingDataSource.setTargetDataSources(dataSourceMap);
+        return routingDataSource;
+    }
+
+    protected HikariConfig hikariConfig(DataSource dataSource) {
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setMaximumPoolSize(maxPoolSize);
+        hikariConfig.setMinimumIdle(minimumIdle);
+        hikariConfig.setDataSource(dataSource);
+        hikariConfig.setAutoCommit(false);
+        return hikariConfig;
+    }
+
+    protected HikariDataSource connectionPoolDataSource(DataSource dataSource) {
+        return new HikariDataSource(hikariConfig(dataSource));
+    }
+
+    @Bean
+    public BeanPostProcessor dialectProcessor() {
+        return new BeanPostProcessor() {
+            @Override
+            public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+                if (bean instanceof HibernateJpaVendorAdapter) {
+                    ((HibernateJpaVendorAdapter) bean).getJpaDialect().setPrepareConnection(false);
+                }
+                return bean;
+            }
+        };
+    }
 }

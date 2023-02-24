@@ -13,6 +13,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -27,12 +28,16 @@ import java.util.Map;
 
 @SpringBootApplication
 @RestController
+@EnableTransactionManagement
 public class DemoApplication {
 
 	@Autowired
 	private PersonRepo personRepo;
 
 	private RestTemplate template = new RestTemplate();
+
+	@Autowired
+	private PersonService personService;
 
 	private String IP = "34.253.182.243";
 
@@ -49,6 +54,25 @@ public class DemoApplication {
 		return personRepo.save(person);
 	}
 
+	@PostMapping("/person-replica")
+	public Person addInTestDb(@RequestBody Person person) {
+		return personService.save(person);
+	}
+
+	@GetMapping("/person-primary-list")
+	public List<Person> primaryList() {
+		return personService.list();
+	}
+
+	@GetMapping("/person-replica-list")
+	public List<Person> replicaList() {
+		return personService.list();
+	}
+
+	@PostMapping("/person-primary")
+	public Person addInPrimary(@RequestBody Person person) {
+		return personService.save(person);
+	}
 	@GetMapping("/person-all")
 	@Transactional(readOnly = true)
 	public List<Person> getAll() {
@@ -60,7 +84,7 @@ public class DemoApplication {
 		for(int i = 0;i<count;++i) {
 			try {
 				Person person = new Person();
-				person.setName("ram");
+				person.setFirstName("ram");
 				person.setAge(12);
 				personRepo.save(person);
 				System.out.println("saved :"+ person.getId());
@@ -89,7 +113,7 @@ public class DemoApplication {
 	@GetMapping("/send-req-ec2/{count}")
 	public Object send(@PathVariable("count") int count) throws InterruptedException {
 		 Person person = new Person();
-		 person.setName("ram");
+		 person.setFirstName("ram");
 		 person.setAge(12);
 		HttpHeaders headers = new HttpHeaders();
 		HttpEntity<Person> request =
