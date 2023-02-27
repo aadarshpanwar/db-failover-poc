@@ -60,7 +60,7 @@ public class DemoApplication {
 		for(int i = 0;i<count;++i) {
 			try {
 				Person person = new Person();
-				person.setName("ram");
+				person.setFirstName("ram");
 				person.setAge(12);
 				personRepo.save(person);
 				System.out.println("saved :"+ person.getId());
@@ -89,7 +89,7 @@ public class DemoApplication {
 	@GetMapping("/send-req-ec2/{count}")
 	public Object send(@PathVariable("count") int count) throws InterruptedException {
 		 Person person = new Person();
-		 person.setName("ram");
+		 person.setFirstName("ram");
 		 person.setAge(12);
 		HttpHeaders headers = new HttpHeaders();
 		HttpEntity<Person> request =
