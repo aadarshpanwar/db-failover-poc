@@ -36,29 +36,24 @@ public class TransactionRoutingConfiguration {
 
     @Bean
     public DataSource dataSource() {
-        return connectionPoolDataSource(primaryEndpoint);
+        return new HikariDataSource(hikariConfig(primaryEndpoint));
     }
-
-    protected HikariDataSource connectionPoolDataSource(String serverUrl) {
-        return new HikariDataSource(hikariConfig(serverUrl));
-    }
-
     protected HikariConfig hikariConfig(String primaryEndpoint) {
         HikariConfig hikariConfig = new HikariConfig();
+        //Hikari pool specific config
         hikariConfig.setUsername(username);
         hikariConfig.setPassword(password);
-        hikariConfig.setMaximumPoolSize(maxPoolSize);
-        hikariConfig.setMinimumIdle(minimumIdle);
         hikariConfig.setAutoCommit(false);
+        //Require for enable Aws wrapper support
         hikariConfig.setDataSourceClassName(AwsWrapperDataSource.class.getName());
         hikariConfig.addDataSourceProperty("jdbcProtocol", "jdbc:postgresql:");
         hikariConfig.addDataSourceProperty("databasePropertyName", "databaseName");
         hikariConfig.addDataSourceProperty("portPropertyName", "portNumber");
         hikariConfig.addDataSourceProperty("serverPropertyName", "serverName");
-        hikariConfig.setJdbcUrl("jdbc:aws-wrapper:postgresql://dbfailover-poc.cluster-cdibd9suphjv.eu-west-1.rds.amazonaws.com:5432/test?currentSchema=test2");
         hikariConfig.addDataSourceProperty("targetDataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
 
         Properties targetDataSourceProps = new Properties();
+        //Db specific config
         targetDataSourceProps.setProperty("currentSchema", schema);
         targetDataSourceProps.setProperty("serverName", primaryEndpoint);
         targetDataSourceProps.setProperty("databaseName", dbName);
