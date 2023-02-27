@@ -25,7 +25,7 @@ public class TransactionRoutingConfiguration {
     @Value("${jdbc.url.primary-port}")
     private String port;
 
-    @Value("${jdbc.url.pimary-databasename}")
+    @Value("${jdbc.url.primary-databasename}")
     private String dbName;
 
     @Value(("${jdbc.url.primary-schema}"))
