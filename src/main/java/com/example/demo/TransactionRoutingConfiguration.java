@@ -26,6 +26,9 @@ public class TransactionRoutingConfiguration {
     @Value("${jdbc.url.replica}")
     private String replicaUrl;
 
+    @Value("${jdbc.url.schema}")
+    private String schema;
+
     @Value("${spring.datasource.username}")
     private String username;
 
@@ -38,20 +41,12 @@ public class TransactionRoutingConfiguration {
 
     @Bean
     public DataSource readWriteDataSource() {
-        PGSimpleDataSource dataSource = new PGSimpleDataSource();
-       // dataSource.setURL(primaryUrl);
-        dataSource.setUser(username);
-        dataSource.setPassword(password);
-        return connectionPoolDataSource( primaryUrl);
+        return new HikariDataSource(hikariConfig(primaryUrl));
     }
 
     @Bean
     public DataSource readOnlyDataSource() {
-//        PGSimpleDataSource dataSource = new PGSimpleDataSource();
-//       // dataSource.setURL(replicaUrl);
-//        dataSource.setUser(username);
-//        dataSource.setPassword(password);
-        return connectionPoolDataSource(replicaUrl);
+        return new HikariDataSource(hikariConfig(replicaUrl));
     }
 
     @Primary
@@ -68,25 +63,25 @@ public class TransactionRoutingConfiguration {
         return routingDataSource;
     }
 
-    protected HikariConfig hikariConfig(String serverUrl) {
+    protected HikariConfig hikariConfig(String endpoint) {
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setUsername(username);
         hikariConfig.setPassword(password);
         hikariConfig.setMaximumPoolSize(maxPoolSize);
         hikariConfig.setMinimumIdle(minimumIdle);
-       // hikariConfig.setDataSource(dataSource);
         hikariConfig.setAutoCommit(false);
         hikariConfig.setDataSourceClassName(AwsWrapperDataSource.class.getName());
-
         hikariConfig.addDataSourceProperty("jdbcProtocol", "jdbc:postgresql:");
         hikariConfig.addDataSourceProperty("databasePropertyName", "databaseName");
         hikariConfig.addDataSourceProperty("portPropertyName", "portNumber");
         hikariConfig.addDataSourceProperty("serverPropertyName", "serverName");
         hikariConfig.addDataSourceProperty("targetDataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
         Properties targetDataSourceProps = new Properties();
-        targetDataSourceProps.setProperty("serverName", serverUrl);
+        targetDataSourceProps.setProperty("currentSchema", schema);
+        targetDataSourceProps.setProperty("serverName", endpoint);
         targetDataSourceProps.setProperty("databaseName", "test");
         targetDataSourceProps.setProperty("portNumber", "5432");
+        //failover plugin specific config
         targetDataSourceProps.setProperty("wrapperPlugins", "failover");
         targetDataSourceProps.setProperty("failoverTimeoutMs", "30000");
         targetDataSourceProps.setProperty("failoverWriterReconnectIntervalMs", "2000");

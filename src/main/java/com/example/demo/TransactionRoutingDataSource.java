@@ -12,7 +12,6 @@ public class TransactionRoutingDataSource extends AbstractRoutingDataSource {
     @Nullable
     @Override
     protected Object determineCurrentLookupKey() {
-        System.out.println("Current transaction readonly:"+ TransactionSynchronizationManager.isCurrentTransactionReadOnly());
         return TransactionSynchronizationManager.isCurrentTransactionReadOnly() ?
                 DataSourceType.READ_ONLY :
                 DataSourceType.READ_WRITE;
